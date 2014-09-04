@@ -355,7 +355,7 @@ cp -fr $SCRIPT_ROOT/patches/* "$TARGET_TRIPLE/"
 # Cleanup
 #
 
-if [ -f $DTMP ]; then
+if [ -d $DTMP ]; then
   echo $blue_arrow"Removing intermediate files..."$norm
   rm -rf $DTMP
 fi

@@ -11,9 +11,9 @@ TARGET_ROOT="/usr/local/embedded"
 
 PKG_BINUTILS_URL="http://ftp.gnu.org/gnu/binutils/binutils-2.24.tar.gz"
 PKG_ARMTOOLS_URL="http://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q2-update/+download/gcc-arm-none-eabi-4_8-2014q2-20140609-mac.tar.bz2"
-PKG_LLVM_URL="http://llvm.org/pre-releases/3.5/rc4/llvm-3.5.0rc4.src.tar.xz"
-PKG_CLANG_URL="http://llvm.org/pre-releases/3.5/rc4/cfe-3.5.0rc4.src.tar.xz"
-PKG_LLD_URL="http://llvm.org/pre-releases/3.5/rc4/lld-3.5.0rc4.src.tar.xz"
+PKG_LLVM_URL="http://llvm.org/releases/3.5.0/llvm-3.5.0.src.tar.xz"
+PKG_CLANG_URL="http://llvm.org/releases/3.5.0/cfe-3.5.0.src.tar.xz"
+PKG_LLD_URL="http://llvm.org/releases/3.5.0/lld-3.5.0.src.tar.xz"
 
 # ----------------------------------------
 

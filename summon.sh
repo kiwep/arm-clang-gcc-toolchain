@@ -9,11 +9,11 @@ export TARGET_TRIPLE="arm-none-eabi"
 
 TARGET_ROOT="/usr/local/embedded"
 
-PKG_BINUTILS_URL="http://ftp.gnu.org/gnu/binutils/binutils-2.24.tar.gz"
-PKG_ARMTOOLS_URL="http://launchpad.net/gcc-arm-embedded/4.8/4.8-2014-q2-update/+download/gcc-arm-none-eabi-4_8-2014q2-20140609-mac.tar.bz2"
-PKG_LLVM_URL="http://llvm.org/releases/3.5.0/llvm-3.5.0.src.tar.xz"
-PKG_CLANG_URL="http://llvm.org/releases/3.5.0/cfe-3.5.0.src.tar.xz"
-PKG_LLD_URL="http://llvm.org/releases/3.5.0/lld-3.5.0.src.tar.xz"
+PKG_BINUTILS_URL="http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz"
+PKG_ARMTOOLS_URL="https://launchpad.net/gcc-arm-embedded/4.9/4.9-2015-q3-update/+download/gcc-arm-none-eabi-4_9-2015q3-20150921-mac.tar.bz2"
+PKG_LLVM_URL="http://llvm.org/releases/3.7.0/llvm-3.7.0.src.tar.xz"
+PKG_CLANG_URL="http://llvm.org/releases/3.7.0/cfe-3.7.0.src.tar.xz"
+PKG_LLD_URL="http://llvm.org/releases/3.7.0/lld-3.7.0.src.tar.xz"
 
 # ----------------------------------------
 
@@ -332,7 +332,7 @@ if [ ! -f "$TARGET_TRIPLE/include/_ansi.h" ]; then
   echo $green_arrow"Moving headers into place..."$norm
   cp -fr $DTMP/src/$TARGET_TRIPLE/$TARGET_TRIPLE/include/{*.h,bits,machine,rpc,sys} "$TARGET_TRIPLE/include/"
   mkdir "$TARGET_TRIPLE/include/c++"
-  cp -fr $DTMP/src/$TARGET_TRIPLE/$TARGET_TRIPLE/include/c++/4.8.4/* "$TARGET_TRIPLE/include/c++/"
+  cp -fr $DTMP/src/$TARGET_TRIPLE/$TARGET_TRIPLE/include/c++/*/* "$TARGET_TRIPLE/include/c++/"
 fi
 
 #
@@ -342,14 +342,14 @@ fi
 if [ ! -f "$TARGET_TRIPLE/lib/libc.a" ]; then
   echo $green_arrow"Moving libraries into place..."$norm
   cp -fr $DTMP/src/$TARGET_TRIPLE/$TARGET_TRIPLE/lib/* "$TARGET_TRIPLE/lib"
-  cp -r $DTMP/src/$TARGET_TRIPLE/lib/gcc/$TARGET_TRIPLE/4.8.4/* "$TARGET_TRIPLE/lib"
+  cp -r $DTMP/src/$TARGET_TRIPLE/lib/gcc/$TARGET_TRIPLE/*/* "$TARGET_TRIPLE/lib"
 fi
 
 #
 # Applying patched files
 #
 
-cp -fr $SCRIPT_ROOT/patches/* "$TARGET_TRIPLE/"
+# cp -fr $SCRIPT_ROOT/patches/* "$TARGET_TRIPLE/"
 
 #
 # Cleanup

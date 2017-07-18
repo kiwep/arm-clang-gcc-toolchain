@@ -159,13 +159,12 @@ def run():
             break
     armgcc_dl_filename = armgcc_dl_link.split("?")[0].split("/")[-1]
     armgcc_dl_link = armgcc_dl_link.replace(" ", "%20")
-
-    if os.path.isfile(armgcc_dl_filename) is False:
-        print "Downloading " + armgcc_dl_filename + "..."
-        download_file(armgcc_dl_link, armgcc_dl_filename)
-
     armgcc_dir = armgcc_dl_filename.split(armgcc_suffix)[0]
+
     if os.path.isdir(armgcc_dir) is False:
+        if os.path.isfile(armgcc_dl_filename) is False:
+            print "Downloading " + armgcc_dl_filename + "..."
+            download_file(armgcc_dl_link, armgcc_dl_filename)
         print "Unpacking " + armgcc_dl_filename + "..."
         tpath = "."
         if armgcc_dl_filename.endswith(".zip"):
@@ -188,7 +187,7 @@ def run():
 
     cm_gen = "Unix Makefiles"
     if OS == "Windows":
-        cm_gen = "Visual Studio 15 2017 Win64"
+        cm_gen = "Visual Studio 14 2015 Win64"
 
     args = [
         CMAKE,
@@ -201,15 +200,32 @@ def run():
         "-DLLVM_DEFAULT_TARGET_TRIPLE=arm-none-eabi"
     ]
 
+    if OS == "Windows":
+        args.append("-Thost=x64")
+
     if CLANG is not None:
         args.append('-DCMAKE_CXX_FLAGS=-std=c++11 -stdlib=libc++')
 
     args.append(os.path.join("..", "..", SRCDIR, LLVMDIR))
 
+    print "Configuring LLVM+Clang..."
     exit_code = subprocess.call(args, env=CALLENV)
     if exit_code != 0:
         sys.exit(exit_code)
 
+    print "Building LLVM+Clang..."
+    if OS == "Windows":
+        exit_code = subprocess.call([
+            "MSBuild",
+            "LLVM.sln",
+            "/t:Build",
+            "/p:Configuration=Release",
+            "/m"
+        ], env=CALLENV)
+    else:
+        exit_code = subprocess.call(["make"])
+    if exit_code != 0:
+        sys.exit(exit_code)
 
 
 #

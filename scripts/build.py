@@ -7,6 +7,8 @@ import defs
 import os
 import sys
 import platform
+import time
+from datetime import timedelta
 
 PYVER = platform.python_version_tuple()
 if int(PYVER[0]) < 3 or int(PYVER[1]) < 5:
@@ -299,20 +301,27 @@ def build(args):
 
     os.chdir(LLVM['build'])
 
-    print('Building LLVM...')
-    if IS_WIN:
-        exit_code = subprocess.call([
-            'MSBuild',
-            'INSTALL.vcxproj',
-            '/t:Build',
-            '/p:Configuration=Release',
-            '/m'
-        ], env=CALLENV)
-    else:
-        exit_code = subprocess.call(['make', 'install', '-j2'])
+    print('Building...')
 
-    if exit_code != 0:
-        sys.exit(exit_code)
+    if os.path.isfile(os.path.join(ROOT_DIR, DIST_DIR, 'bin', 'clang')) is False:
+        print('> Building LLVM...')
+        if IS_WIN:
+            exit_code = subprocess.call([
+                'MSBuild',
+                'INSTALL.vcxproj',
+                '/t:Build',
+                '/p:Configuration=Release',
+                '/m'
+            ], env=CALLENV)
+        else:
+            exit_code = subprocess.call(['make', 'install', '-j2'])
+
+        if exit_code != 0:
+            sys.exit(exit_code)
+
+    else:
+        print('> LLVM is already built')
+
 
     # if IS_WIN:
     #     exit_code = subprocess.call([
@@ -331,9 +340,16 @@ def build(args):
 #
 #
 
+START_TS = time.time()
+
 parser = argparse.ArgumentParser(prog='toolchain')
 parser.add_argument('-c', '--clean', action='store_true', help='clean the projects before executing subcommand')
 subparsers = parser.add_subparsers(title='subcommands', dest='cmd')
+
+parser_build = subparsers.add_parser('build', help='build the toolchain (default)')
+parser_build.add_argument('-rc', '--reconfigure', action='store_true', help='force reconfiure the target')
+parser_build.add_argument('-rb', '--rebuild', action='store_true', help='force rebuild the target')
+parser_build.set_defaults(func=build)
 
 parser_clean = subparsers.add_parser('clean', help='remove build files')
 parser_clean.set_defaults(func=clean)
@@ -345,12 +361,8 @@ parser_unpack = subparsers.add_parser('unpack', help='unpack the source files')
 parser_unpack.set_defaults(func=unpack)
 
 parser_configure = subparsers.add_parser('configure', help='configure the build targets')
-parser_configure.add_argument('-rc', '--reconfigure', action='store_true', help='clean the projects before executing subcommand')
+parser_configure.add_argument('-rc', '--reconfigure', action='store_true', help='force reconfiure the target')
 parser_configure.set_defaults(func=configure)
-
-parser_build = subparsers.add_parser('build', help='build the toolchain (default)')
-parser_build.add_argument('-rc', '--reconfigure', action='store_true', help='clean the projects before executing subcommand')
-parser_build.set_defaults(func=build)
 
 parser.set_default_subparser('build')
 args = parser.parse_args()
@@ -359,3 +371,6 @@ if args.clean is True:
     clean()
 
 args.func(args)
+
+print('')
+print('Done in', str(timedelta(seconds=time.time() - START_TS)))

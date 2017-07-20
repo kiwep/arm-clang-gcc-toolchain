@@ -151,7 +151,7 @@ def unpack(args=None):
     if os.path.isdir(SRC_DIR) is False:
         os.makedirs(SRC_DIR)
     if os.path.isdir(DIST_DIR) is False:
-        os.mkdir(DIST_DIR)
+        os.makedirs(DIST_DIR)
 
     # Unpack GNU ARM Toolchain
     # os.chdir(DIST_DIR)

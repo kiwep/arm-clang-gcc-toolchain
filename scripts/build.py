@@ -25,19 +25,20 @@ EXT = ''
 if IS_WIN:
     EXT = '.exe'
 
-ROOT_DIR = os.getcwd()
-os.chdir(ROOT_DIR)
+ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
 WORK_DIR = 'work'
 SRC_DIR = os.path.join(WORK_DIR, 'src')
 DL_DIR = os.path.join(WORK_DIR, 'dl')
 BUILD_DIR = os.path.join(WORK_DIR, 'build')
 
-DIST_DIR = os.path.join('dist', 'arm-none-eabi-llvm-%s' % sys.platform)
+DIST_DIR = 'arm-none-eabi-llvm-%s' % sys.platform
 TRIPLE = 'arm-none-eabi'
 
 ARMGCC = {}
 LLVM = {}
+
+VER = {}
 
 CMAKE = util.which('cmake', win_defaults=defs.defpath['cmake'])
 CALLENV = dict(os.environ)
@@ -60,14 +61,6 @@ def clean(args=None):
         shutil.rmtree(WORK_DIR)
     if os.path.isdir(DIST_DIR):
         shutil.rmtree(DIST_DIR)
-
-#
-
-def prepare_dirs():
-    if os.path.isdir(SRC_DIR) is False:
-        os.makedirs(SRC_DIR)
-    if os.path.isdir(DIST_DIR) is False:
-        os.mkdir(DIST_DIR)
 
 #
 
@@ -158,15 +151,6 @@ def unpack(args=None):
     if os.path.isdir(DIST_DIR) is False:
         os.makedirs(DIST_DIR)
 
-    # Unpack GNU ARM Toolchain
-    # os.chdir(DIST_DIR)
-    # if os.path.isdir(TRIPLE) is False:
-    #     print('> Extracting %s...' % ARMGCC['filename'])
-    #     path = ARMGCC['dirname'] if sys.platform == 'win32' else '.'
-    #     util.extract_file(os.path.join(ROOT_DIR, DL_DIR, ARMGCC['filename']), path)
-    #     util.movefiles(ARMGCC['dirname'], '.')
-    #     os.rmdir(ARMGCC['dirname'])
-
     os.chdir(os.path.join(ROOT_DIR, SRC_DIR))
 
     # Unpack GNU ARM Toolchain
@@ -176,7 +160,7 @@ def unpack(args=None):
         util.extract_file(os.path.join(ROOT_DIR, DL_DIR, ARMGCC['filename']), path)
 
     # Copy files from GNU ARM Toolchain
-    dest = os.path.join(ROOT_DIR, DIST_DIR)
+    dest = DIST_DIR
     for dpath in ['include', 'lib']:
         if os.path.isdir(os.path.join(dest, TRIPLE, dpath)) is False:
             shutil.copytree(os.path.join(ARMGCC['dirname'], TRIPLE, dpath), os.path.join(dest, TRIPLE, dpath))
@@ -197,9 +181,10 @@ def unpack(args=None):
             shutil.copy2(src, dst)
 
     libdest = os.path.join(dest, TRIPLE, 'lib')
+    gcclib = os.path.join(dest, 'lib', 'gcc', TRIPLE)
+    gcclibver = os.listdir(gcclib)[0]
+    VER['gcc'] = gcclibver
     if os.path.isfile(os.path.join(libdest, 'crtbegin.o')) is False:
-        gcclib = os.path.join(dest, 'lib', 'gcc', TRIPLE)
-        gcclibver = os.listdir(gcclib)[0]
         copy_tree(os.path.join(gcclib, gcclibver), libdest)
 
     cppincbase = os.path.join(dest, TRIPLE, 'include', 'c++')
@@ -215,6 +200,8 @@ def unpack(args=None):
         print('> Extracting %s...' % LLVM['llvm'])
         util.extract_file(os.path.join(ROOT_DIR, DL_DIR, LLVM['llvm']))
         os.rename(LLVM['src'] + '.src', LLVM['src'])
+
+    VER['llvm'] = LLVM['src'].split('-')[1]
 
     # Unpack Clang
     clang_tmp_dir = LLVM['clang'].split('.src.tar.xz')[0]
@@ -266,7 +253,7 @@ def configure(args=None):
             cm_gen = 'Visual Studio 14 2015 Win64'
             args.append('-Thost=x64')
 
-        install_dir = os.path.join('..', '..', '..', DIST_DIR)
+        install_dir = DIST_DIR
         args += [
             '-Wno-dev',
             '-DPYTHON_EXECUTABLE=%s' % sys.executable,
@@ -290,7 +277,21 @@ def configure(args=None):
         if exit_code != 0:
             sys.exit(exit_code)
 
+    os.chdir(DIST_DIR)
+
+    with open('gcc.ver', 'w') as tfile:
+        tfile.write('%s\n' % VER['gcc'])
+
+    with open('llvm.ver', 'w') as tfile:
+        tfile.write('%s\n' % VER['llvm'])
+
     os.chdir(ROOT_DIR)
+
+#
+
+def copy_extras():
+    copy_tree(os.path.join(ROOT_DIR, 'extras'), DIST_DIR)
+    pass
 
 #
 
@@ -303,7 +304,7 @@ def build(args):
 
     print('Building...')
 
-    if os.path.isfile(os.path.join(ROOT_DIR, DIST_DIR, 'bin', 'clang')) is False:
+    if os.path.isfile(os.path.join(DIST_DIR, 'bin', 'clang')) is False:
         print('> Building LLVM...')
         if IS_WIN:
             exit_code = subprocess.call([
@@ -314,7 +315,7 @@ def build(args):
                 '/m'
             ], env=CALLENV)
         else:
-            exit_code = subprocess.call(['make', 'install', '-j2'])
+            exit_code = subprocess.call(['make', 'install', '-j%s' % args.jobs])
 
         if exit_code != 0:
             sys.exit(exit_code)
@@ -322,19 +323,9 @@ def build(args):
     else:
         print('> LLVM is already built')
 
-
-    # if IS_WIN:
-    #     exit_code = subprocess.call([
-    #         'MSBuild',
-    #         'INSTALL.vcxproj',
-    #         '/t:Build',
-    #         '/p:Configuration=Release'
-    #     ], env=CALLENV)
-
-    # if exit_code != 0:
-    #     sys.exit(exit_code)
-
     os.chdir(ROOT_DIR)
+
+    copy_extras()
 
 #
 #
@@ -343,7 +334,9 @@ def build(args):
 START_TS = time.time()
 
 parser = argparse.ArgumentParser(prog='toolchain')
+parser.add_argument('-p', '--prefix', help='the build destination folder path (default is "dist")')
 parser.add_argument('-c', '--clean', action='store_true', help='clean the projects before executing subcommand')
+parser.add_argument('-j', '--jobs', type=int, default=2, help='number of jobs used with make (default is 2)')
 subparsers = parser.add_subparsers(title='subcommands', dest='cmd')
 
 parser_build = subparsers.add_parser('build', help='build the toolchain (default)')
@@ -367,9 +360,15 @@ parser_configure.set_defaults(func=configure)
 parser.set_default_subparser('build')
 args = parser.parse_args()
 
+if args.prefix is not None:
+    DIST_DIR = os.path.join(os.path.realpath(args.prefix), DIST_DIR)
+else:
+    DIST_DIR = os.path.join(ROOT_DIR, 'dist', DIST_DIR)
+
 if args.clean is True:
     clean()
 
+print('Using prefix: %s' % DIST_DIR)
 args.func(args)
 
 print('')

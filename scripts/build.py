@@ -19,6 +19,9 @@ import subprocess
 from distutils.dir_util import copy_tree
 
 IS_WIN = platform.system() == 'Windows'
+EXT = ''
+if IS_WIN:
+    EXT = '.exe'
 
 ROOT_DIR = os.getcwd()
 os.chdir(ROOT_DIR)
@@ -167,7 +170,7 @@ def unpack(args=None):
     # Unpack GNU ARM Toolchain
     if os.path.isdir(ARMGCC['dirname']) is False:
         print('> Extracting %s...' % ARMGCC['filename'])
-        path = ARMGCC['dirname'] if sys.platform == 'win32' else '.'
+        path = ARMGCC['dirname'] if IS_WIN else '.'
         util.extract_file(os.path.join(ROOT_DIR, DL_DIR, ARMGCC['filename']), path)
 
     # Copy files from GNU ARM Toolchain
@@ -186,7 +189,7 @@ def unpack(args=None):
         'ar', 'as', 'gdb', 'gdb-py', 'ld', 'ld.bfd', 'nm', 'objcopy', 'objdump',
         'ranlib', 'readelf', 'size', 'strings', 'strip'
     ]:
-        src = os.path.join(ARMGCC['dirname'], 'bin', '%s-%s' % (TRIPLE, bname))
+        src = os.path.join(ARMGCC['dirname'], 'bin', '%s-%s%s' % (TRIPLE, bname, EXT))
         dst = os.path.join(dest, 'bin', bname)
         if os.path.isfile(dst) is False:
             shutil.copy2(src, dst)
@@ -257,7 +260,7 @@ def configure(args=None):
         args = [CMAKE]
 
         cm_gen = 'Unix Makefiles'
-        if os.name == 'win32':
+        if IS_WIN:
             cm_gen = 'Visual Studio 14 2015 Win64'
             args.append('-Thost=x64')
 
@@ -296,7 +299,7 @@ def build(args):
     os.chdir(LLVM['build'])
 
     print('Building LLVM...')
-    if os.name == 'win32':
+    if IS_WIN:
         exit_code = subprocess.call([
             'MSBuild',
             'LLVM.sln',
@@ -311,7 +314,7 @@ def build(args):
         sys.exit(exit_code)
 
     # print('Moving LLVM into place...')
-    # if os.name == 'win32':
+    # if IS_WIN:
     #     pass
     # else:
     #     exit_code = subprocess.call(['make', 'install'])

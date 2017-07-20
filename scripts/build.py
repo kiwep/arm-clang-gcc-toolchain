@@ -267,6 +267,7 @@ def configure(args=None):
         install_dir = os.path.join('..', '..', '..', DIST_DIR)
         args += [
             '-Wno-dev',
+            '-DPYTHON_EXECUTABLE=%s' % sys.executable,
             '-DCMAKE_BUILD_TYPE=Release',
             '-DCMAKE_CROSSCOMPILING=True',
             '-DCMAKE_INSTALL_PREFIX=%s' % install_dir,

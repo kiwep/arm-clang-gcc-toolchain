@@ -190,7 +190,7 @@ def unpack(args=None):
         'ranlib', 'readelf', 'size', 'strings', 'strip'
     ]:
         src = os.path.join(ARMGCC['dirname'], 'bin', '%s-%s%s' % (TRIPLE, bname, EXT))
-        dst = os.path.join(dest, 'bin', bname)
+        dst = os.path.join(dest, 'bin', bname + EXT)
         if os.path.isfile(dst) is False:
             shutil.copy2(src, dst)
 
@@ -302,7 +302,7 @@ def build(args):
     if IS_WIN:
         exit_code = subprocess.call([
             'MSBuild',
-            'LLVM.sln',
+            'INSTALL.vcxproj',
             '/t:Build',
             '/p:Configuration=Release',
             '/m'
@@ -313,11 +313,13 @@ def build(args):
     if exit_code != 0:
         sys.exit(exit_code)
 
-    # print('Moving LLVM into place...')
     # if IS_WIN:
-    #     pass
-    # else:
-    #     exit_code = subprocess.call(['make', 'install'])
+    #     exit_code = subprocess.call([
+    #         'MSBuild',
+    #         'INSTALL.vcxproj',
+    #         '/t:Build',
+    #         '/p:Configuration=Release'
+    #     ], env=CALLENV)
 
     # if exit_code != 0:
     #     sys.exit(exit_code)
